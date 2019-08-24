@@ -1,4 +1,5 @@
 *.o
 *.ghc
 a.out
+ant
 

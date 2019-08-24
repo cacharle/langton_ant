@@ -4,10 +4,14 @@ CCFLAGS = -Wall -Wextra
 LDFLAGS = $(shell sdl2-config --libs --cflags)
 
 HEADER = header.h
-SRC = main.c graphics.c
+SRC = main.c graphics.c world.c
 OBJ = $(SRC:.c=.o)
 
 RM = rm -f
+
+.PHONY: debug
+debug: CCFLAGS += -g
+debug: re
 
 .PHONY: all
 all: $(NAME)
