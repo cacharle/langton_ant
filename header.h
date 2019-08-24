@@ -21,8 +21,8 @@ typedef enum
 
 typedef struct
 {
-    int y;
-    int x;
+    size_t y;
+    size_t x;
     Direction direction;
 } Ant;
 
@@ -44,7 +44,7 @@ typedef struct
 // world.c
 World *world_create(size_t size);
 void world_destroy(World *world);
-void world_next(World *world);
+int world_next(World *world);
 
 // graphics.c
 State *graphics_init(void);

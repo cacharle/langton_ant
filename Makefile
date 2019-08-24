@@ -1,6 +1,6 @@
 NAME = ant
 CC = gcc
-CCFLAGS = -Wall -Wextra -Werror
+CCFLAGS = -Wall -Wextra
 LDFLAGS = $(shell sdl2-config --libs --cflags)
 
 HEADER = header.h

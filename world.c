@@ -47,8 +47,10 @@ void world_destroy(World *world)
     free(world);
 }
 
-void world_next(World *world)
+int world_next(World *world)
 {
+    if (world->ant.y >= world->size || world->ant.x >= world->size)
+        return -1;
     Color *current = &world->grid[world->ant.y][world->ant.x];
     if (*current == COLOR_WHITE)
     {
@@ -60,6 +62,7 @@ void world_next(World *world)
         turn_left(&world->ant);
         *current = COLOR_WHITE;
     }
+    return 0;
 }
 
 static void move_right(Ant *ant)
