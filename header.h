@@ -1,6 +1,7 @@
 #ifndef __HEADER_H__
 # define __HEADER_H__
 
+# include <stdbool.h>
 # include <stddef.h>
 # include <SDL2/SDL.h>
 
@@ -34,8 +35,10 @@ typedef struct
 
 typedef struct
 {
+    bool running;
     SDL_Window *window;
     SDL_Renderer *renderer;
+    World *world;
 } State;
 
 // world.c
@@ -43,5 +46,9 @@ World *world_create(size_t size);
 void world_destroy(World *world);
 void world_next(World *world);
 
+// graphics.c
+State *graphics_init(void);
+void graphics_quit(State *state);
+void graphics_run(State *state);
 
 #endif

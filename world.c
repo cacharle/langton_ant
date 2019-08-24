@@ -39,6 +39,8 @@ World *world_create(size_t size)
 
 void world_destroy(World *world)
 {
+    if (world == NULL)
+        return;
     for (size_t i = 0; i < world->size && world->grid[i] != NULL; i++)
         free(world->grid[i]);
     free(world->grid);
