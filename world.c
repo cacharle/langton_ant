@@ -1,18 +1,23 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include "header.h"
+#include "config.h"
 
+static Cycle parse_cycle(char *cycle_str);
 static void turn_left(Ant *ant);
 static void move_right(Ant *ant);
 static void update_position(Ant *ant);
 
-World *world_create(size_t size)
+World *world_create(size_t size, char *cycle_str)
 {
     if (size == 0)
         return NULL;
     World *world = (World*)malloc(sizeof(World));
     if (world == NULL)
         return NULL;
+    if ((world->cycle = parse_cycle(cycle_str)) == NULL)
+        return NULL;
+    world->cycle_len = strlen(cycle_str);
     world->grid = (Color**)malloc(sizeof(Color*) * size);
     if (world->grid == NULL)
     {
@@ -28,7 +33,7 @@ World *world_create(size_t size)
             return NULL;
         }
         for (size_t j = 0; j < size; j++)
-            world->grid[i][j] = COLOR_BLACK;
+            world->grid[i][j] = COLOR_UNVISITED;
     }
     world->size = size;
     world->ant.x = size / 2;
@@ -44,6 +49,7 @@ void world_destroy(World *world)
     for (size_t i = 0; i < world->size && world->grid[i] != NULL; i++)
         free(world->grid[i]);
     free(world->grid);
+    free(world->cycle);
     free(world);
 }
 
@@ -52,17 +58,37 @@ int world_next(World *world)
     if (world->ant.y >= world->size || world->ant.x >= world->size)
         return -1;
     Color *current = &world->grid[world->ant.y][world->ant.x];
-    if (*current == COLOR_WHITE)
+    if (*current == COLOR_UNVISITED)
+        *current = 1;
+    switch (world->cycle[*current])
     {
-        move_right(&world->ant);
-        *current = COLOR_BLACK;
+        case DIRECTION_LEFT:
+            turn_left(&world->ant);
+            break;
+        case DIRECTION_RIGHT:
+            move_right(&world->ant);
+            break;
+        default:
+            return -1;
     }
-    else if (*current == COLOR_BLACK)
-    {
-        turn_left(&world->ant);
-        *current = COLOR_WHITE;
-    }
+    *current = (*current + 1) % world->cycle_len;
     return 0;
+}
+
+static Cycle parse_cycle(char *cycle_str)
+{
+    for (int i = 0; cycle_str[i]; i++)
+        if (cycle_str[i] != 'L' && cycle_str[i] != 'R')
+            return NULL;
+    size_t cycle_len = strlen(cycle_str);
+    if (cycle_len > CYCLE_MAX || cycle_len < CYCLE_MIN)
+        return NULL;
+    Cycle cycle = (Cycle)malloc(sizeof(Direction) * cycle_len);
+    if (cycle == NULL)
+        return NULL;
+    for (int i = 0; cycle_str[i]; i++)
+        cycle[i] = cycle_str[i] == 'L' ? DIRECTION_LEFT : DIRECTION_RIGHT;
+    return cycle;
 }
 
 static void move_right(Ant *ant)

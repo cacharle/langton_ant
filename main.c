@@ -4,7 +4,7 @@
 
 int main(void)
 {
-    World *world = world_create(100);
+    World *world = world_create(150, "LR");
     if (world == NULL)
     {
         fprintf(stderr, "Error: unable to initialize world");
@@ -14,5 +14,6 @@ int main(void)
     state->world = world;
     graphics_run(state);
     graphics_quit(state);
+    /* world_destroy(world); */
     return EXIT_SUCCESS;
 }

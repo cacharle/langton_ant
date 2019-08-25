@@ -1,24 +1,25 @@
 #include <SDL2/SDL.h>
+#include "config.h"
 #include "header.h"
 
-#define WINDOW_TITLE "Langton's Ant"
-#define WINDOW_X 10
-#define WINDOW_Y 10
-#define WINDOW_WIDTH 480
-#define WINDOW_HEIGHT 360
-#define CELL_SIZE 5
-#define TIME_WORLD_NEXT 0
+#define RGB_RED_MASK   0xFF0000
+#define RGB_GREEN_MASK 0x00FF00
+#define RGB_BLUE_MASK  0x0000FF
+#define RGB_EXTRACT_RED(rgb)   ((rgb & RGB_RED_MASK) >> (8 * 2))
+#define RGB_EXTRACT_GREEN(rgb) ((rgb & RGB_GREEN_MASK) >> (8 * 1))
+#define RGB_EXTRACT_BLUE(rgb)  (rgb & RGB_BLUE_MASK)
 
 #define SET_DRAW_COLOR_WHITE(renderer) ( \
     SDL_SetRenderDrawColor((renderer), 255, 255, 255, SDL_ALPHA_OPAQUE))
 #define SET_DRAW_COLOR_BLACK(renderer) ( \
-    SDL_SetRenderDrawColor((renderer), 0, 0, 0, SDL_ALPHA_OPAQUE))
+    SDL_SetRenderDrawColor((renderer), 50, 50, 50, SDL_ALPHA_OPAQUE))
 #define SET_DRAW_COLOR_RED(renderer) ( \
     SDL_SetRenderDrawColor((renderer), 255, 0, 0, SDL_ALPHA_OPAQUE))
 
 static void update_renderer(State *state);
 static void draw_world(State *state);
 static void event_handler(State *state);
+static void set_cell_draw_color(State *state, Color color);
 static void destroy_state(State *state);
 static void error_exit(char *message);
 static void error_exit_state(State *state, char *message);
@@ -54,18 +55,20 @@ void graphics_run(State *state)
     while (state->running)
     {
         event_handler(state);
-        update_renderer(state);
         world_current_time = SDL_GetTicks();
         if (SDL_TICKS_PASSED(world_current_time, world_next_time))
         {
+            update_renderer(state);
             world_next_time = world_current_time + TIME_WORLD_NEXT;
-            if (world_next(state->world) < 0)
-            {
-                SDL_Delay(1000);
-                state->running = false;
-            }
+            for (int i = 0; i < WORLD_STEP_SIZE; i++)
+                if (world_next(state->world) < 0)
+                {
+                    SDL_Delay(1000);
+                    state->running = false;
+                    break;
+                }
         }
-        SDL_Delay(10);
+        SDL_Delay(MAIN_LOOP_DELAY);
     }
 }
 
@@ -91,23 +94,18 @@ static void draw_world(State *state)
         tmp_rect.x = i * CELL_SIZE;
         for (size_t j = 0; j < state->world->size; j++)
         {
+            set_cell_draw_color(state, current);
             current = state->world->grid[i][j];
-            if (i == state->world->ant.y && j == state->world->ant.x)
-                SET_DRAW_COLOR_RED(state->renderer);
-            else if (current == COLOR_WHITE)
-                SET_DRAW_COLOR_WHITE(state->renderer);
-            else if (current == COLOR_BLACK)
-                SET_DRAW_COLOR_BLACK(state->renderer);
             tmp_rect.y = j * CELL_SIZE;
             SDL_RenderFillRect(state->renderer, &tmp_rect);
         }
     }
+    /* printf("\n"); */
 }
 
 static void event_handler(State *state)
 {
     SDL_Event event;
-
     while (SDL_PollEvent(&event))
     {
         switch (event.type)
@@ -117,6 +115,39 @@ static void event_handler(State *state)
                 break;
         }
     }
+}
+
+static void set_cell_draw_color(State *state, Color color)
+{
+    long unsigned int rgb = 0;
+    switch (color)
+    {
+        case COLOR_UNVISITED:
+            rgb = COLOR_RGB_UNVISITED;
+            break;
+        case COLOR_WHITE:
+            rgb = COLOR_RGB_WHITE;
+            break;
+        case COLOR_BLACK:
+            rgb = COLOR_RGB_BLACK;
+            break;
+        case COLOR_RED:
+            rgb = COLOR_RGB_RED;
+            break;
+        case COLOR_GREEN:
+            rgb = COLOR_RGB_GREEN;
+            break;
+        case COLOR_BLUE:
+            rgb = COLOR_RGB_BLUE;
+            break;
+        default:
+            error_exit_state(state, "invalid color");
+    }
+    /* printf("rgb: %06lx, %06lx, %06lx\n", RGB_EXTRACT_RED(rgb), */
+    /*         RGB_EXTRACT_GREEN(rgb), RGB_EXTRACT_BLUE(rgb)); */
+    SDL_SetRenderDrawColor(state->renderer, RGB_EXTRACT_RED(rgb),
+                           RGB_EXTRACT_GREEN(rgb), RGB_EXTRACT_BLUE(rgb),
+                           SDL_ALPHA_OPAQUE);
 }
 
 static void destroy_state(State *state)
